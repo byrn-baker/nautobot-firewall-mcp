@@ -366,7 +366,7 @@ async def firewall_create_zone(
             "status": {"name": "Active"},
             "description": description or "",
         }
-        result = await client.rest_post("plugins/firewall/zones", payload)
+        result = await client.rest_post("plugins/firewall/zone", payload)
 
         # 6. Return created zone
         return json.dumps({
@@ -420,7 +420,7 @@ async def firewall_delete_zone(name: str, cr_number: Optional[str] = None) -> st
                 )
 
         # Delete the zone
-        await client.rest_delete(f"plugins/firewall/zones/{zone_id}")
+        await client.rest_delete(f"plugins/firewall/zone/{zone_id}")
 
         return json.dumps({"status": "deleted", "name": name})
     except NautobotError as e:
@@ -495,7 +495,7 @@ async def firewall_create_address_object(
             payload["fqdn"] = {"name": value}
 
         # 5. POST to create address object
-        result = await client.rest_post("plugins/firewall/address-objects", payload)
+        result = await client.rest_post("plugins/firewall/address-object", payload)
 
         # 6. Return created object
         return json.dumps({
@@ -553,7 +553,7 @@ async def firewall_create_service_object(
             body["port"] = port
 
         # Create via REST
-        result = await client.rest_post("plugins/firewall/service-objects", body)
+        result = await client.rest_post("plugins/firewall/service-object", body)
 
         return json.dumps({
             "status": "created",
@@ -614,7 +614,7 @@ async def firewall_delete_service_object(
                     )
 
         # 4. Delete the service object
-        await client.rest_delete(f"plugins/firewall/service-objects/{object_id}")
+        await client.rest_delete(f"plugins/firewall/service-object/{object_id}")
 
         # 5. Return success
         return json.dumps({"status": "deleted", "name": name})
@@ -669,7 +669,7 @@ async def firewall_create_policy(
             "status": {"name": "Active"},
             "description": description or "",
         }
-        result = await client.rest_post("plugins/firewall/policies", payload)
+        result = await client.rest_post("plugins/firewall/policy", payload)
 
         # 5. Return created policy
         return json.dumps({
@@ -789,7 +789,7 @@ async def firewall_create_policy_rule(
             rules_to_shift.sort(key=lambda r: r.get("index", 0), reverse=True)
             for rule in rules_to_shift:
                 await client.rest_patch(
-                    f"plugins/firewall/policy-rules/{rule['id']}",
+                    f"plugins/firewall/policy-rule/{rule['id']}",
                     {"index": rule["index"] + 1},
                 )
 
@@ -812,7 +812,7 @@ async def firewall_create_policy_rule(
         if dest_zone_id:
             payload["destination_zone"] = dest_zone_id
 
-        result = await client.rest_post("plugins/firewall/policy-rules", payload)
+        result = await client.rest_post("plugins/firewall/policy-rule", payload)
 
         # 9. Return created rule
         return json.dumps({
@@ -875,7 +875,7 @@ async def firewall_delete_address_object(
                     )
 
         # 4. Delete the address object
-        await client.rest_delete(f"plugins/firewall/address-objects/{object_id}")
+        await client.rest_delete(f"plugins/firewall/address-object/{object_id}")
 
         # 5. Return success
         return json.dumps({"status": "deleted", "name": name})
@@ -930,7 +930,7 @@ async def firewall_create_nat_policy(
             "status": {"name": "Active"},
             "description": description or "",
         }
-        result = await client.rest_post("plugins/firewall/nat-policies", payload)
+        result = await client.rest_post("plugins/firewall/nat-policy", payload)
 
         # 5. Return created policy
         return json.dumps({
@@ -1030,7 +1030,7 @@ async def firewall_create_nat_rule(
             "translated_destination": trans_dst_uuid,
             "index": index,
         }
-        result = await client.rest_post("plugins/firewall/nat-policy-rules", payload)
+        result = await client.rest_post("plugins/firewall/nat-policy-rule", payload)
 
         # 6. Return created rule
         return json.dumps({
@@ -1084,7 +1084,7 @@ async def firewall_delete_policy_rule(
         deleted_index = rule_info["index"]
 
         # 4. DELETE the rule
-        await client.rest_delete(f"plugins/firewall/policy-rules/{rule_id}")
+        await client.rest_delete(f"plugins/firewall/policy-rule/{rule_id}")
 
         # 5. Query remaining rules for the policy
         remaining_query = f"""{{
@@ -1103,7 +1103,7 @@ async def firewall_delete_policy_rule(
         rules_to_shift.sort(key=lambda r: r.get("index", 0))
         for rule in rules_to_shift:
             await client.rest_patch(
-                f"plugins/firewall/policy-rules/{rule['id']}",
+                f"plugins/firewall/policy-rule/{rule['id']}",
                 {"index": rule["index"] - 1},
             )
 
@@ -1184,7 +1184,7 @@ async def firewall_move_policy_rule(
             ]
             for r in affected:
                 await client.rest_patch(
-                    f"plugins/firewall/policy-rules/{r['id']}",
+                    f"plugins/firewall/policy-rule/{r['id']}",
                     {"index": r["index"] - 1},
                 )
         else:
@@ -1197,13 +1197,13 @@ async def firewall_move_policy_rule(
             affected.sort(key=lambda r: r.get("index", 0), reverse=True)
             for r in affected:
                 await client.rest_patch(
-                    f"plugins/firewall/policy-rules/{r['id']}",
+                    f"plugins/firewall/policy-rule/{r['id']}",
                     {"index": r["index"] + 1},
                 )
 
         # 7. PATCH target rule to new_index
         await client.rest_patch(
-            f"plugins/firewall/policy-rules/{rule_id}",
+            f"plugins/firewall/policy-rule/{rule_id}",
             {"index": new_index},
         )
 
@@ -1258,7 +1258,7 @@ async def firewall_delete_nat_rule(
         deleted_index = rule_info["index"]
 
         # 4. DELETE the rule
-        await client.rest_delete(f"plugins/firewall/nat-policy-rules/{rule_id}")
+        await client.rest_delete(f"plugins/firewall/nat-policy-rule/{rule_id}")
 
         # 5. Query remaining NAT rules for the policy
         remaining_query = f"""{{
@@ -1278,7 +1278,7 @@ async def firewall_delete_nat_rule(
         for rule in rules_to_shift:
             new_idx = rule["index"] - 1
             await client.rest_patch(
-                f"plugins/firewall/nat-policy-rules/{rule['id']}",
+                f"plugins/firewall/nat-policy-rule/{rule['id']}",
                 {"index": new_idx},
             )
 
