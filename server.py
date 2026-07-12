@@ -477,8 +477,25 @@ async def firewall_create_address_object(
             payload["description"] = description
 
         if type == "host":
+            # The firewall plugin links an EXISTING ipam.ipaddress; it does not
+            # create one. Get-or-create the IPAM IP so the reference resolves.
+            existing = await client.rest_get("ipam/ip-addresses", {"address": value})
+            if not existing.get("results"):
+                await client.rest_post("ipam/ip-addresses", {
+                    "address": value,
+                    "status": {"name": "Active"},
+                    "namespace": {"name": "Global"},
+                })
             payload["ip_address"] = {"address": value}
         elif type == "network":
+            # Get-or-create the IPAM prefix so the reference resolves.
+            existing = await client.rest_get("ipam/prefixes", {"prefix": value})
+            if not existing.get("results"):
+                await client.rest_post("ipam/prefixes", {
+                    "prefix": value,
+                    "status": {"name": "Active"},
+                    "namespace": {"name": "Global"},
+                })
             payload["prefix"] = {"prefix": value}
         elif type == "range":
             # Parse "start-end" format
